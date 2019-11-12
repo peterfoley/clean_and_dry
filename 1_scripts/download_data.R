@@ -7,17 +7,7 @@ library(dplyr)
 
 # get garmin creds
 gc_user <- "pwfoley@gmail.com"
-key_name <- paste0("gcexport ", gc_user)
-safeSecretGetter <- possibly(
-  rstudioapi::askForSecret,
-  otherwise=keyring::key_get("RStudio Keyring Secrets", key_name))
-gc_pass <- safeSecretGetter(
-    key_name,
-    message = paste("Garmin Connect password for ", gc_user, ":", sep = ""),
-    title = paste("Garmin Connect Password"))
-if(is.null(gc_pass)) {
-  stop(paste0("No password supplied for Garmin Connect user ", gc_user))
-}
+gc_pass <- keyring::key_get("sso.garmin.com",username=gc_user)
 
 # run the downloader tool with reticulate
 output_dir <- here("private_data/gcexport")
