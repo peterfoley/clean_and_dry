@@ -4,3 +4,7 @@
 external_tools/
 private_data/
 gcexport.log
+GarminConnectConfig.json
+garmin.log
+login_post.html
+stats.txt
