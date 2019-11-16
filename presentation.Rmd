@@ -1,0 +1,31 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Tips
+
+Always helpful:
+
+  - `usethis::use_git`
+
+Utility scripts:
+  - no side effects
+  - don't source other utility scripts -- keep it flat
+  - 
+
+## Work log
+
+Script log:
+ - first goal was to get the activity traces downloaded and read into R
+    - ifirst tried reading as .fit files, but those didn't load traces well
+    - switched to .gpx format, and `plotKML::readGPX` loads those very quickly but breaks extension fields like heart rate
+    - fell back to directly processing gpx files with mix of xml2 and purrr
+  - then wanted to plot just the dog walks
+    - filtered down to the usual walk route, and then manually dropped some activities
+    - needed to calculate and expand bounding boxes to get pretty maps around the traces
+
