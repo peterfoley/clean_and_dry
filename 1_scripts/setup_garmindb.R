@@ -4,6 +4,7 @@ library(dplyr)
 library(fs)
 library(keyring)
 library(reticulate)
+library(purrr)
 use_condaenv("r-reticulate", required=TRUE)
 
 repo_url <- "https://github.com/tcgoetz/GarminDB.git"
@@ -68,10 +69,10 @@ garmin$GarminDBConfigManager$GarminDBConfig$directories$relative_to_home <- FALS
 garmin$GarminDBConfigManager$GarminDBConfig$directories$base_dir <- data_dir
 
 
-debug = FALSE
+debug = TRUE
 test = FALSE
 overwrite = FALSE
-latest = FALSE # only gets the latest data
+latest = FALSE # only gets the latest dataa
 
 monitoring = TRUE
 sleep = TRUE
@@ -80,8 +81,16 @@ rhr = TRUE
 activities = TRUE
 
 
-garmin$download_data(overwrite, latest, weight, monitoring, sleep, rhr, activities)
-garmin$import_data(debug, test, latest, weight, monitoring, sleep, rhr, activities)
+possible_gets <- c("weight","monitoring","sleep","rhr","activities") %>%
+  set_names
+
+results <- lapply(possible_gets, function(doget) {
+  get_args <- unlist(possible_gets) %in% doget
+  download_args <- c(overwrite, latest, get_args)
+  dl_result <- try(do.call(garmin$download_data, as.list(download_args)))
+  import_args <- c(debug, test, latest, get_args)
+  import_result <- try(do.call(garmin$import_data, as.list(import_args)))
+  list(download = dl_result, import = import_result)
+})
+print(results)
 garmin$analyze_data(debug)
-
-
