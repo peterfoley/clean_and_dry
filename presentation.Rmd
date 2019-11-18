@@ -1,6 +1,14 @@
 ---
-title: "Untitled"
-output: html_document
+title: "Staying clean and DRY"
+subtitle: "best practices for code reuse and collaboration"
+author: "Peter Foley"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  xaringan::moon_reader:
+    seal: true
+    nature:
+      highlightStyle: github
+      highlightLines: true
 ---
 
 ```{r setup, include=FALSE}
@@ -8,24 +16,57 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-# Talk outline
+---
+About me
 
-- List of options for organizing code cleanly
-- Tips for making each option work well
-- Guidance on when to pick each
+---
+What are we doing and why bother
 
+Options for organizing code cleanly
 
+Tips for each option
+
+When to use each option
+
+---
 ## Glossary
 
-- Side Effects -- when you change something outside your code/function other than what you return
+- Side Effects
+- Clean Code
+- Don't repeat yourself
 
-- example: you have an coffee pot
-  measure_temperature(coffee_pot) - no side effect
-  fill(from=coffee_pot, to=cup) - no side effect
-  pour_on_floor(from=coffee_pot) - side effect!
+---
+## Glossary - Side Effects
+
+> change something that you weren't passed and don't return
+
+```{r eval=FALSE}
+coffee_pot <- make_a_pot(cups=12)
+```
+
+You can do these things without side effects:
+```{r eval=FALSE}
+temp <- measure_temperature(coffee_pot)
+filled_cup <- fill(from = coffee_pot, to = cup)
+```
+
+This has a side effect!:
+```{r eval=FALSE}
+*pour_on_floor(from = coffee_pot)
+```
+
+---
+## Glossary - Don't Repeat Yourself
 
 
-## Why organize code
+---
+## Glossary - Clean Code
+
+
+
+
+---
+## Why bother?
 
 - If any of these apply to you:
   - You can't remember everything perfectly forever
@@ -34,6 +75,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 > Reading code is harder than writing it
 
+---
 # Options for organizing code
 
 - standalone scripts
@@ -41,22 +83,26 @@ knitr::opts_chunk$set(echo = TRUE)
 - utility package (`devtools::load_all("utils_pkg")`)
 - standalone package (`library(package)`)
 
-
+---
 ## Standalone Scripts
 
 
 
+
+---
 ## Utility scripts
 
 
-
+---
 ## Utility package
 
 
-
+---
 ## Standalone package
 
 
+
+---
 ## Tips
 
 Always helpful:
@@ -75,15 +121,4 @@ Standalone packages:
   - `usethis::use_testthat()`
   - `usethis::use_travis()`
   - 
-
-## Work log
-
-Script log:
- - first goal was to get the activity traces downloaded and read into R
-    - ifirst tried reading as .fit files, but those didn't load traces well
-    - switched to .gpx format, and `plotKML::readGPX` loads those very quickly but breaks extension fields like heart rate
-    - fell back to directly processing gpx files with mix of xml2 and purrr
-  - then wanted to plot just the dog walks
-    - filtered down to the usual walk route, and then manually dropped some activities
-    - needed to calculate and expand bounding boxes to get pretty maps around the traces
 
