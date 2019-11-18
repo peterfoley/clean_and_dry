@@ -7,15 +7,73 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+# Talk outline
+
+- List of options for organizing code cleanly
+- Tips for making each option work well
+- Guidance on when to pick each
+
+
+## Glossary
+
+- Side Effects -- when you change something outside your code/function other than what you return
+
+- example: you have an coffee pot
+  measure_temperature(coffee_pot) - no side effect
+  fill(from=coffee_pot, to=cup) - no side effect
+  pour_on_floor(from=coffee_pot) - side effect!
+
+
+## Why organize code
+
+- If any of these apply to you:
+  - You can't remember everything perfectly forever
+  - Other people don't know what you know
+  - You sometimes make mistakes and want to fix them
+
+> Reading code is harder than writing it
+
+# Options for organizing code
+
+- standalone scripts
+- utility scripts (`source("utils.R")`)
+- utility package (`devtools::load_all("utils_pkg")`)
+- standalone package (`library(package)`)
+
+
+## Standalone Scripts
+
+
+
+## Utility scripts
+
+
+
+## Utility package
+
+
+
+## Standalone package
+
+
 ## Tips
 
 Always helpful:
-
   - `usethis::use_git`
+  - separate "define how to do X" from "do X"
 
 Utility scripts:
   - no side effects
   - don't source other utility scripts -- keep it flat
+
+Internal packages:
+  - function documentation will show up in rstudio as tooltips
+  - README.md can be helpful 
+
+Standalone packages:
+  - `usethis::use_testthat()`
+  - `usethis::use_travis()`
   - 
 
 ## Work log
