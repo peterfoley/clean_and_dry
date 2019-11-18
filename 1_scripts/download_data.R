@@ -19,9 +19,9 @@ export_args <- c(
   "--username", gc_user,
   "--password", gc_pass,
   "--count", max_activities,
-  "--format", "gpx",
+  "--format", "original",
   "--directory", output_dir,
-  "--subdir", "gpx",
+  "--subdir", "fit",
   "--unzip"
 )
 res <- gcexport$main(c("gcexport.py",export_args))

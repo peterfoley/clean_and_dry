@@ -10,45 +10,15 @@ library(xml2)
 future::plan(future::multiprocess())
 
 here <- here::here
-data_dir <- here("private_data/gcexport")
+gcexport_dir <- here("private_data/gcexport")
 
 activities <- read_csv(file.path(data_dir,"activities.csv")) %>%
   distinct
 
-flatten_fully <- function(alist) {
-  times <- purrr::vec_depth(alist)
-  for(i in seq_len(max(0,times-2))) {
-    alist <- purrr::flatten(alist)
-  }
-  alist
-}
-
-flatten_trkpt <- function(trkpt) {
-  exclude_attrs <- c("names","class")
-  extra_attrs <- attributes(trkpt)
-  extra_attrs <- extra_attrs[!names(extra_attrs) %in% exclude_attrs]
-  c(flatten_fully(trkpt), extra_attrs)
-}
-
-gpx_to_df <- function(gpx_path) {
-  xml <- xml2::read_xml(gpx_path) %>%
-    xml_ns_strip()
-  tracks <- xml_find_all(xml, "trk") %>%
-    as_list()
-  nested <- tracks %>%
-    map(
-      ~modify_at(., "trkseg",
-        ~modify_at(.,"trkpt",. %>% flatten_trkpt) %>%
-          set_names(NULL) %>%
-          bind_rows(.id = "segment_in_track") %>%
-          as.list) %>%
-        modify_at(., c("name","type"), unlist))
-
-  flat <- nested %>% map(. %>% flatten %>% as_tibble) %>%
-    bind_rows(.id="track_in_activity") %>%
-    readr::type_convert(col_types = cols())
-
-  flat
+fit_from_id <- function(id) {
+  fit_path <- path(gcexport_dir,"fit",paste0("activity_",id,".fit"))
+  fit_data <- fit::read.fit(fit_path)
+  fit_data$record
 }
 
 km_per_mile <- 1.60934
@@ -57,18 +27,29 @@ dog_walks <- activities %>%
          `Distance (km)` %>%
            between(1.25 * km_per_mile,
                    1.4 * km_per_mile)) %>%
-  mutate(filename = paste0("activity_",`Activity ID`,".gpx"),
-         filepath = fs::path(data_dir, "gpx", filename)) %>%
-  mutate(data = future_map(filepath, gpx_to_df))
+  mutate(data = future_map(`Activity ID`, fit_from_id, .progress = TRUE))
 
 all_flat <- dog_walks %>%
   filter(`Activity ID` != 2858485459,
          `Activity ID` != 3062996451) %>%
-  tidyr::unnest(col="data")
+  tidyr::unnest(col="data") %>%
+  mutate(ele = altitude,
+         lat = position_lat,
+         lon = position_long)
 
 latlon_bb <- function(df) {
   # left/bottom/right/top
-  c(min(df$lon), min(df$lat), max(df$lon), max(df$lat))
+  clean <- function(x) {
+    x <- na.omit(x)
+    x <- x[!near(abs(x), 180, tol=.001)]
+    x
+  }
+  lat <- clean(df$lat)
+  lon <- clean(df$lon)
+  c(min(lon, na.rm=T),
+    min(lat, na.rm=T),
+    max(lon, na.rm=T),
+    max(lat, na.rm=T))
 }
 pad_bb <- function(bb, lat=1.1, lon=lat) {
   center = c(lon = bb[1] + bb[3], lat = bb[2] + bb[4]) / 2
@@ -78,7 +59,7 @@ pad_bb <- function(bb, lat=1.1, lon=lat) {
     bottom = center[['lat']] - halfwidth[['lat']]*lat,
     right  = center[['lon']] + halfwidth[['lon']]*lon,
     top    = center[['lat']] + halfwidth[['lat']]*lat
-    )
+  )
 }
 
 library(ggmap)
