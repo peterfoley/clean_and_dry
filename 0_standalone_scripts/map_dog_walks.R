@@ -12,7 +12,7 @@ future::plan(future::multiprocess())
 here <- here::here
 gcexport_dir <- here("private_data/gcexport")
 
-activities <- read_csv(file.path(data_dir,"activities.csv")) %>%
+activities <- read_csv(file.path(gcexport_dir,"activities.csv")) %>%
   distinct
 
 fit_from_id <- function(id) {
@@ -73,6 +73,9 @@ pl_dat <- all_flat %>%
   group_by(`Activity ID`) %>%
   mutate(ele_norm = (ele - min(ele))/(max(ele)-min(ele)))
 
-ggmap(basemap, extent="device") +
+walk_plot <- ggmap(basemap, extent="device") +
   geom_path(data=pl_dat, aes(x=lon,y=lat, group=`Activity ID`, color=ele_norm)) +
   scale_colour_gradient(low="green", high="red")
+
+ggsave(walk_plot, file="0_standalone_scripts/dog_walks.png")
+
