@@ -4,6 +4,7 @@ library(reticulate)
 library(keyring)
 library(purrr)
 library(dplyr)
+library(readr)
 
 # get garmin creds
 gc_user <- "pwfoley@gmail.com"
@@ -25,3 +26,12 @@ export_args <- c(
   "--unzip"
 )
 res <- gcexport$main(c("gcexport.py",export_args))
+
+
+# deduplicate the csv file that it created
+# read_lines instead of read_csv to preserve weird quoting
+# and to preserve CRLF
+read_lines(file.path(output_dir,"activities.csv")) %>%
+  unique %>%
+  write_lines(file.path(output_dir,"activities.csv"),
+              sep = "\r\n")
