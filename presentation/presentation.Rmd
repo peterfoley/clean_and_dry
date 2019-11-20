@@ -1,0 +1,240 @@
+---
+title: "Staying clean and DRY"
+subtitle: "best practices for code reuse and collaboration"
+author: "Peter Foley"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  xaringan::moon_reader:
+    seal: true
+    css: ["default", "default-fonts", "presentation.css"]
+    nature:
+      highlightStyle: github
+      highlightLines: true
+    includes:
+      in_header: presentation_head.html
+      before_body: presentation_body.html
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+```
+
+TODO - About me
+
+---
+Why bother keeping things organized
+
+Walk through example project with evolving needs
+  - will go through R's options for organizing code cleanly
+  - will give tips for each option
+  - will demonstrate when to switch between options
+
+---
+## Glossary
+
+- Side Effects
+- Clean Code
+- Don't repeat yourself
+
+---
+name: glossary-side-effect
+## Glossary - Side Effect
+
+> change something other than arguments or return values
+
+```{r eval=FALSE}
+coffee_pot <- make_a_pot(cups = 12)
+```
+
+---
+template: glossary-side-effect
+
+.pull-left[
+No side effects:
+```{r eval=FALSE, size="small"}
+temp <-
+  temperature(coffee_pot)
+
+stream <-
+  pour_from(coffee_pot,
+            cups=2)
+filled_cup <-
+  pour_into(empty_cup,
+            stream)
+```
+]
+
+.pull-right[
+TODO - picture of pouring coffee
+]
+
+---
+template: glossary-side-effect
+
+.pull-left[
+Side effect!:
+```{r eval=FALSE}
+*dump_on_floor(coffee_pot)
+```
+]
+
+.pull-right[
+TODO - picture of coffee spill
+]
+
+
+---
+## Glossary - Don't Repeat Yourself
+
+TODO
+
+
+---
+## Glossary - Clean Code
+
+TODO
+
+---
+## Why bother?
+
+- If any of these apply to you:
+  - You can't remember everything perfectly forever
+  - Other people don't know what you know
+  - You sometimes make mistakes and want to fix them
+
+> Reading code is harder than writing it
+
+---
+# Options for organizing code
+
+- standalone scripts
+- utility scripts (`source("utils.R")`)
+- utility package (`devtools::load_all("utils_pkg")`)
+- standalone package (`library(package)`)
+
+
+---
+
+# The Project
+
+Make a plot of all my GPS-tracked dog walks, colored by elevation.
+
+.project-equation[
+<div class="project-equation-item">![garmin_logo][garmin_logo]</div>
+<div class="project-equation-item">x</div>
+<div class="project-equation-item">![dogpicture][dog_face]</div>
+<div class="project-equation-item">=</div>
+<div class="project-equation-item">![dogmap][dogmap_standalone]</div>
+]
+
+[dog_face]: photos/dog_face.jpeg
+[dogmap_standalone]: links/0_standalone_scripts/dog_walks.png
+[garmin_logo]: https://user-images.githubusercontent.com/6187884/29765129-3d63e67e-8bda-11e7-81c8-7beaf915a02a.jpg
+
+```{r results="asis", echo=FALSE}
+DiagrammeR::mermaid(height=200, width=800, "
+  graph TD
+      setup_keys[setup_keys.R]
+      get_downloader[get_downloader.R]
+      download_data[download_data.R]
+      map_dog_walks[map_dog_walks.R]
+      
+      class setup_keys,get_downloader,download_data,map_dog_walks script
+    
+      creds>Stored Garmin Credentials]
+      downloader>Python Download Tool]
+      fitfiles>Downloaded FIT files]
+      dog_walks>Map of walks]
+      
+      class creds,downloader,fitfiles,dog_walks data
+      
+      setup_keys --> creds
+      get_downloader --> downloader
+      creds --> download_data
+      download_data --> fitfiles
+      downloader --> download_data
+      fitfiles --> map_dog_walks
+      map_dog_walks --> dog_walks
+      
+      classDef script fill:#f96,stroke-width:0px;
+      classDef data stroke-width:0px
+")
+```
+
+---
+
+```{r include=FALSE}
+standalone <- function(..., lines=15) {
+  res <- readLines(here(fs::path("0_standalone_scripts",...)))
+  if(length(res) > lines) {
+    n_more <- length(res)-lines
+    res[lines+1] <- paste0("...(",n_more," more lines)...")
+    lines <- lines+1
+  }
+  head(res, lines)
+}
+```
+
+.pull-left[
+**`setup_keys.R`**
+.tinycode[
+```{r eval=FALSE, code=standalone("setup_keys.R")}
+```
+]
+
+**`get_downloader.R`**
+.tinycode[
+```{r eval=FALSE, code=standalone("get_downloader.R", lines=Inf)}
+```
+]
+]
+
+.pull-right[
+**`download_data.R`**
+.tinycode[
+```{r eval=FALSE, code=standalone("download_data.R")}
+```
+]
+
+**`map_dog_walks.R`**
+.tinycode[
+```{r eval=FALSE, code=standalone("map_dog_walks.R")}
+```
+]
+]
+
+---
+## Utility scripts
+
+
+---
+## Utility package
+
+
+---
+## Standalone package
+
+
+
+---
+## Tips
+
+Always helpful:
+  - `usethis::use_git`
+  - separate "define how to do X" from "do X"
+
+Utility scripts:
+  - no side effects
+  - don't source other utility scripts -- keep it flat
+
+Internal packages:
+  - function documentation will show up in rstudio as tooltips
+  - README.md can be helpful 
+
+Standalone packages:
+  - `usethis::use_testthat()`
+  - `usethis::use_travis()`
+  - 
+
