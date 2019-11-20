@@ -6,7 +6,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   xaringan::moon_reader:
     seal: true
-    css: ["default", "default-fonts", "presentation.css"]
+    css: ["shinobi", "ninjutsu", "default", "default-fonts", "presentation.css"]
     nature:
       highlightStyle: github
       highlightLines: true
@@ -104,7 +104,9 @@ TODO
   - Other people don't know what you know
   - You sometimes make mistakes and want to fix them
 
-> Reading code is harder than writing it
+--
+
+Reading code is harder than writing it
 
 ---
 # Options for organizing code
@@ -114,24 +116,32 @@ TODO
 - utility package (`devtools::load_all("utils_pkg")`)
 - standalone package (`library(package)`)
 
+--
+
+An actual project will make things clearer
 
 ---
+# The Initial Project
 
-# The Project
-
-Make a plot of all my GPS-tracked dog walks, colored by elevation.
+Plot of all my dog walks, colored by elevation.
 
 .project-equation[
-<div class="project-equation-item">![garmin_logo][garmin_logo]</div>
-<div class="project-equation-item">x</div>
-<div class="project-equation-item">![dogpicture][dog_face]</div>
-<div class="project-equation-item">=</div>
-<div class="project-equation-item">![dogmap][dogmap_standalone]</div>
+  .project-equation-item[
+    ![garmin_logo][garmin_logo]]
+  .project-equation-char[x]
+  .project-equation-item[
+    ![dogpicture][dog_face]]
+  .project-equation-char[=]
+  .project-equation-item[
+    ![dogmap][dogmap_standalone]]
 ]
 
 [dog_face]: photos/dog_face.jpeg
 [dogmap_standalone]: links/0_standalone_scripts/dog_walks.png
 [garmin_logo]: https://user-images.githubusercontent.com/6187884/29765129-3d63e67e-8bda-11e7-81c8-7beaf915a02a.jpg
+
+---
+## Implementation
 
 ```{r results="asis", echo=FALSE}
 DiagrammeR::mermaid(height=200, width=800, "

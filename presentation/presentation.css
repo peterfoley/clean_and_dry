@@ -1,6 +1,5 @@
 .tinycode .remark-code {font-size:40%}
 
-
 .project-equation {
   margin-left: 0;
   margin-right: 0;
@@ -10,13 +9,16 @@
   align-items: center;
   justify-content: space-evenly;
   flex-wrap: nowrap;
+  font-size: 50px;
 }
 
-.project-equation-item {
-  font-size: 50px;
-  max-width: 30%;
-  margin-left: 5%;
-  margin-right: 5%;
+.project-equation img {
+  height: 150px;
+}
+
+.project-equation-char{
+  margin-left: 2%;
+  margin-right: 2%;
 }
 
 .center {
@@ -24,3 +26,12 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+
+
+/* Xaringan overrides */
+
+.remark-slide-content{
+  font-size:30px;
+}
+
