@@ -6,6 +6,8 @@ library(purrr)
 library(dplyr)
 library(readr)
 
+source("utils/config.R")
+
 # get garmin creds
 gc_user <- strict_config("garmin_connect_username")
 gc_service <- strict_config("garmin_connect_keyring_service")

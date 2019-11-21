@@ -2,6 +2,8 @@
 library(here)
 library(fs)
 
+source("utils/config.R")
+
 exporter_dir <- strict_config("exporter_dir")
 dir.create(exporter_dir, showWarnings = FALSE, recursive = TRUE)
 repo_already_cloned <- file_exists(path(exporter_dir,".git/"))
