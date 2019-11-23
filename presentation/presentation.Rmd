@@ -56,7 +56,7 @@ background-size: contain
 
 ---
 .boomfull[
-<h1>Projects</h1>
+<h1>Glossary</h1>
 ]
 
 ---
@@ -90,11 +90,9 @@ layout: true
 
 ---
 > Changing state in a way that could change how other code runs.
-> 
-> `plot()`, `write_csv()`, `Sys.setenv()`, `library()`
 
 ```{r eval=FALSE}
-pot <- fresh_pot(); cup <- new_cup(cups = 2)
+pot <- fresh_pot(); mug <- new_mug(capacity_ounces = 12)
 ```
 
 ---
@@ -104,8 +102,8 @@ temp <-
   temperature(pot)
 
 pour(from=pot,
-     into=cup,
-     cups=2)
+     into=mug,
+     ounces=12)
 ```
 ]
 
@@ -118,8 +116,17 @@ pour(from=pot,
 ```{r eval=FALSE}
 # again!
 pour(from=pot,
-     into=cup,
-     cups=2)
+     into=mug,
+     ounces=12)
+```
+Defining `pour` is safe, calling `pour()` can be dangerous.
+
+```{r eval=FALSE}
+plot()
+write_csv()
+Sys.setenv()
+library()
+#> stats vs. dplyr filter
 ```
 ]
 
@@ -129,6 +136,7 @@ pour(from=pot,
 
 
 ---
+layout:false
 background-image: url("photos/clean_code.jpg")
 background-position: center
 background-size: contain
@@ -151,9 +159,16 @@ That boilerplate is rarely tested and often copy/pasted.
 
 --
 
-.boomfull[
+.center[
 <h1>Reading code is harder than writing it.</h1>
 ]
+
+---
+layout:false
+.boomfull[
+<h1>Time to get organized!</h1>
+]
+
 
 ---
 layout: false
@@ -222,8 +237,8 @@ widgetframe::frameWidget(diagram, width="100%", height="100%")
 ---
 
 ```{r include=FALSE}
-standalone <- function(..., lines=50) {
-  res <- readLines(here(fs::path("0_standalone_scripts",...)))
+codehead <- function(indir) function(..., lines=50) {
+  res <- readLines(here(fs::path(indir,...)))
   if(length(res) > lines) {
     n_more <- length(res)-lines
     res[lines+1] <- paste0("...(",n_more," more lines)...")
@@ -231,6 +246,8 @@ standalone <- function(..., lines=50) {
   }
   head(res, lines)
 }
+standalone <- codehead(indir="0_standalone_scripts")
+utility <- codehead(indir="1_utility_scripts")
 ```
 
 .pull-left[
@@ -273,8 +290,6 @@ class: center, middle
 
 `.R` files that are `source()`'ed to define functions or variables.
 
-> Note: `config` can handle a lot of configuration needs
-
 ```{r eval=FALSE, tidy=FALSE}
 library(dplyr)
 library(ggplot2)
@@ -297,12 +312,17 @@ Why put things in utility scripts?
   - less code
   - write once for all collaborators
   - separates "define how to do X" from "do X"
-    - more readable "do stuff" scripts
+    - "Teach your code to fish"
+    - more readable "Action" scripts: `catch_a_fish()`
 
 ---
 Do put in utility scripts:
   - Shared configuration (file locations, etc.)
-  - Shared needs (DB authentication, loading particular data)
+  - Shared needs
+    - DB authentication
+    - loading particular data
+    - data filter/cleanup functions
+    - standardized definitions
   - Big ugly function definitions
 
 ---
@@ -313,6 +333,7 @@ Do NOT put in:
     - saving plots
     - user interaction
   - `source()` calls to other utility scripts
+  - `library()`
 
 ---
 layout: true
@@ -340,6 +361,20 @@ make_basemap(flat_data, zoom=16)
 ]
 
 ---
+layout: false
+## New mapping script
+
+**`map_runs.R`**
+.tinycode[
+```{r eval=FALSE, code=utility("map_runs.R", lines=Inf)}
+```
+]
+
+
+---
+layout: false
+## New scripts
+
 .center[
 ```{r echo=FALSE, results='asis'}
 scriptRows <- function(adir) {
@@ -404,13 +439,13 @@ diagram <- DiagrammeR::mermaid("
         mapping_utils[mapping.R]
       end
       
-      config_utils -.-> setup_keys
-      config_utils -.-> download_data
-      config_utils -.-> get_downloader
-      config_utils -.-> map_dog_walks
-      config_utils -.-> map_runs
-      mapping_utils -.-> map_dog_walks
-      mapping_utils -.-> map_runs
+      config_utils -.- setup_keys
+      config_utils -.- download_data
+      config_utils -.- get_downloader
+      config_utils -.- map_dog_walks
+      config_utils -.- map_runs
+      mapping_utils -.- map_dog_walks
+      mapping_utils -.- map_runs
       
       classDef script fill:#f96,stroke-width:0px
       classDef invisible opacity:1.0
@@ -425,8 +460,9 @@ background-position: center
 background-size: contain
 
 --
+
 .center[
-<img src="links/1_utility_scripts/runs.png" style="width:60%">
+<img src="links/1_utility_scripts/runs.png" style="width:80%;position:absolute;top:55%;left:9%;">
 ] 
 
 ---
@@ -522,7 +558,7 @@ load_all(path = ".", reset = TRUE, recompile = FALSE,
 ### `devtools::load_all()` lets you
 
 .center[
-House utility functions alongside "do stuff" code.
+House utility functions alongside "Action" code.
 
 Keep a tidy namespace.
 
@@ -550,7 +586,7 @@ Define dependencies -- **or not**.
     ```
 3. Be done if you feel like it.
     ```{r eval=FALSE, tidy=T}
-    pkgload::load_all("myutils")
+    devtools::load_all("myutils")
     ```
 
 ---
@@ -593,19 +629,19 @@ Rendering development documentation for 'get_activity_data'
 ## Like tests?
 
 1. Add the boilerplate
-```{r eval=FALSE}
-setwd("myutils")
-usethis::use_testthat()
-```
+    ```{r eval=FALSE}
+    setwd("myutils")
+    usethis::use_testthat()
+    ```
 2. Write your tests
-```{r eval=FALSE}
-usethis::use_test("onething")
-# opens tests/testthat/test-onething.R for editing
-```
+    ```{r eval=FALSE}
+    usethis::use_test("onething")
+    # opens tests/testthat/test-onething.R for editing
+    ```
 3. Test!
-```{r eval=FALSE}
-devtools::test(".")
-```
+    ```{r eval=FALSE}
+    devtools::test(".")
+    ```
 
 
 ---
@@ -615,7 +651,7 @@ Usethis will put them in `DESCRIPTION` for you. Same for github packages!
 ```{r eval=FALSE}
 usethis::use_package("ggmap")
 devtools::install_github("kuperov/fit")
-sethis::use_dev_package("fit")
+usethis::use_dev_package("fit")
 ```
 .small[
 > add `@import` roxygen tags if you want to use `fun()` instead of `ggmap::fun()` within `myutils`
@@ -704,7 +740,7 @@ devtools::install_github(
 ---
 # Standalone package
 
-All the code is there.
+The code is identical to your utility package.
 
 Difference is in how a "standalone" package is **managed**.
 
@@ -756,6 +792,17 @@ Difference is in how a "standalone" package is **managed**.
 .deftable-right[
 - Useful outside the project
 ]
+]
+
+
+---
+
+background-image: url("photos/dog_happy.jpeg")
+background-position: center
+background-size: contain
+
+.boomfull[
+<h1 style="color:white">Thank you!</h1>
 ]
 
 
