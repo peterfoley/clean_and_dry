@@ -2,12 +2,33 @@
 
 get_all_activities <- function() {
   activity_file <- file.path(strict_config("gcexport_data_dir"),"activities.csv")
-  activities <- read_csv(activity_file)
+  activities <- readr::read_csv(activity_file)
   distinct(activities)
 }
 
+flatten_activities <- function(nested) {
+  nested %>%
+    tidyr::unnest(col="data") %>%
+    mutate(ele = altitude,
+           lat = position_lat,
+           lon = position_long)
+}
+
+make_basemap <- function(flat, zoom=16) {
+  basemap <- latlon_bb(flat) %>%
+    pad_bb(2.0,1.1) %>%
+    ggmap::get_map(location=., maptype="toner", source="stamen", messaging=T, zoom=zoom)
+  ggmap::ggmap(basemap, extent="device")
+}
+
+#' Get activity data
+#'
+#' @param id Garmin Activity ID
+#'
+#' @return dataframe with one row per moment recorded
+#' @export
 get_activity_data <- function(id) {
-  fit_path <- path(strict_config("gcexport_data_dir"),"fit",paste0("activity_",id,".fit"))
+  fit_path <- fs::path(strict_config("gcexport_data_dir"),"fit",paste0("activity_",id,".fit"))
   fit_data <- fit::read.fit(fit_path)
   fit_data$record
 }
