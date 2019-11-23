@@ -6,19 +6,23 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   xaringan::moon_reader:
     seal: true
-    css: ["shinobi", "ninjutsu", "default", "default-fonts", "presentation.css"]
+    css: ["ninjutsu", "default", "default-fonts", "presentation.css"]
     nature:
       highlightStyle: github
       highlightLines: true
     includes:
       in_header: presentation_head.html
-      before_body: presentation_body.html
+      after_body: presentation_body.html
 ---
 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(here)
+here <- here::here
+library(dplyr)
+library(purrr)
+library(tibble)
+library(fs)
 ```
 
 TODO - About me
@@ -39,7 +43,7 @@ Walk through example project with evolving needs
 - Don't repeat yourself
 
 ---
-name: glossary-side-effect
+layout: true
 ## Glossary - Side Effect
 
 > change something other than arguments or return values
@@ -49,8 +53,6 @@ coffee_pot <- make_a_pot(cups = 12)
 ```
 
 ---
-template: glossary-side-effect
-
 .pull-left[
 No side effects:
 ```{r eval=FALSE, size="small"}
@@ -71,8 +73,6 @@ TODO - picture of pouring coffee
 ]
 
 ---
-template: glossary-side-effect
-
 .pull-left[
 Side effect!:
 ```{r eval=FALSE}
@@ -86,6 +86,7 @@ TODO - picture of coffee spill
 
 
 ---
+layout:false
 ## Glossary - Don't Repeat Yourself
 
 TODO
@@ -123,7 +124,7 @@ An actual project will make things clearer
 ---
 # The Initial Project
 
-Plot of all my dog walks, colored by elevation.
+Plot all my dog walks, colored by elevation.
 
 .project-equation[
   .project-equation-item[
@@ -141,10 +142,10 @@ Plot of all my dog walks, colored by elevation.
 [garmin_logo]: https://user-images.githubusercontent.com/6187884/29765129-3d63e67e-8bda-11e7-81c8-7beaf915a02a.jpg
 
 ---
-## Implementation
+class: center, middle
 
-```{r results="asis", echo=FALSE}
-DiagrammeR::mermaid(height=200, width=800, "
+```{r standalone_flow, results="asis", echo=FALSE, fig.align='center', fig.retina=3}
+diagram <- DiagrammeR::mermaid("
   graph TD
       setup_keys[setup_keys.R]
       get_downloader[get_downloader.R]
@@ -168,15 +169,17 @@ DiagrammeR::mermaid(height=200, width=800, "
       fitfiles --> map_dog_walks
       map_dog_walks --> dog_walks
       
-      classDef script fill:#f96,stroke-width:0px;
+      classDef script fill:#f96,stroke-width:0px
+      classDef invisible opacity:1.0
       classDef data stroke-width:0px
 ")
+widgetframe::frameWidget(diagram, width="100%", height="100%")
 ```
 
 ---
 
 ```{r include=FALSE}
-standalone <- function(..., lines=15) {
+standalone <- function(..., lines=50) {
   res <- readLines(here(fs::path("0_standalone_scripts",...)))
   if(length(res) > lines) {
     n_more <- length(res)-lines
@@ -194,17 +197,17 @@ standalone <- function(..., lines=15) {
 ```
 ]
 
-**`get_downloader.R`**
+**`download_data.R`**
 .tinycode[
-```{r eval=FALSE, code=standalone("get_downloader.R", lines=Inf)}
+```{r eval=FALSE, code=standalone("download_data.R")}
 ```
 ]
 ]
 
 .pull-right[
-**`download_data.R`**
+**`get_downloader.R`**
 .tinycode[
-```{r eval=FALSE, code=standalone("download_data.R")}
+```{r eval=FALSE, code=standalone("get_downloader.R", lines=Inf)}
 ```
 ]
 
@@ -215,29 +218,244 @@ standalone <- function(..., lines=15) {
 ]
 ]
 
----
-## Utility scripts
-
 
 ---
-## Utility package
+class: center, middle
+
+```{r ref.label='standalone_flow', echo=FALSE, results="asis"}
+```
+
+---
+# Utility scripts
+
+`.R` files that are `source()`'ed to define functions or variables.
+
+> Note: `config` can handle a lot of configuration needs
+
+```{r eval=FALSE, tidy=FALSE}
+library(dplyr)
+library(ggplot2)
+
+source("utils_data.R")
+source("utils_mapping.R")
+
+get_the_data(date="2019-11-23") %>% #<<
+  filter(driver=="Penelope") %>%
+  map_all_drives() #<<
+```
 
 
 ---
-## Standalone package
+layout: true
+## Standalone → Utility scripts
+
+---
+Why put things in utility scripts?
+  - less code
+  - write once for all collaborators
+  - separates "define how to do X" from "do X"
+    - more readable "do stuff" scripts
+
+---
+Do put in utility scripts:
+  - Shared configuration (file locations, etc.)
+  - Shared needs (DB authentication, loading particular data)
+  - Big ugly function definitions
+
+---
+Do NOT put in:
+  - code that actually takes actions
+    - reading data
+    - writing data
+    - saving plots
+    - user interaction
+  - `source()` calls to other utility scripts
+
+---
+layout: true
+## New utility scripts
+
+---
+.pull-left[
+**`utils/config.R`**
+```r
+strict_config(value, ...)
+```
+]
+.pull-right[
+**`utils/mapping.R`**
+```{r eval=FALSE, tidy=T}
+get_all_activities()
+get_activity_data(id)
+flatten_activities(nested)
+latlon_bb(df, lat=df$lat,
+          lon=df$lon)
+pad_bb(bb, lat=1.1,
+       lon=lat)
+make_basemap(flat_data, zoom=16)
+```
+]
+
+---
+.center[
+```{r echo=FALSE, results='asis'}
+scriptRows <- function(adir) {
+  tibble(path=dir_ls(adir, glob="*.R", recurse=1)) %>%
+    transmute(file=basename(path),
+           lines=map_int(path, R.utils::countLines))
+}
+counts <- tribble(
+  ~version, ~dir,
+  "Standalone", "0_standalone_scripts",
+  "Utility", "1_utility_scripts"
+) %>%
+  mutate(dir = here(dir),
+         data = map(dir, scriptRows)) %>%
+  tidyr::unnest(data) %>%
+  select(version, file, lines) %>%
+  tidyr::pivot_wider(file, names_from=version, values_from=lines) %>%
+  arrange(desc(Standalone), desc(Utility)) %>%
+  set_names(c("","Pre","Post"))
+
+oldopt <- options(knitr.kable.NA = '-')
+knitr::kable(counts, format="html")
+options(oldopt)
+```
+]
+
+
+---
+layout:false
+```{r utility_flow, results="asis", echo=FALSE, fig.align='center', fig.retina=3}
+diagram <- DiagrammeR::mermaid("
+  graph TD
+      setup_keys[setup_keys.R]
+      get_downloader[get_downloader.R]
+      download_data[download_data.R]
+      map_dog_walks[map_dog_walks.R]
+      map_runs[map_runs.R]
+      
+      class setup_keys,get_downloader,download_data script
+      class map_dog_walks,map_runs script
+    
+      creds>Stored Garmin Credentials]
+      downloader>Python Download Tool]
+      fitfiles>Downloaded FIT files]
+      dog_walks>Map of walks]
+      runs>Map of runs]
+      
+      class creds,downloader,fitfiles,dog_walks,runs data
+      
+      setup_keys --> creds
+      get_downloader --> downloader
+      creds --> download_data
+      download_data --> fitfiles
+      downloader --> download_data
+      fitfiles --> map_dog_walks
+      map_dog_walks --> dog_walks
+      fitfiles --> map_runs
+      map_runs --> runs
+      
+      subgraph utils
+        config_utils[config.R]
+        mapping_utils[mapping.R]
+      end
+      
+      config_utils -.-> setup_keys
+      config_utils -.-> download_data
+      config_utils -.-> get_downloader
+      config_utils -.-> map_dog_walks
+      config_utils -.-> map_runs
+      mapping_utils -.-> map_dog_walks
+      mapping_utils -.-> map_runs
+      
+      classDef script fill:#f96,stroke-width:0px
+      classDef invisible opacity:1.0
+      classDef data stroke-width:0px
+")
+widgetframe::frameWidget(diagram, width="100%", height="100%")
+```
+
+---
+background-image: url("photos/kids_win.jpg")
+background-position: center
+background-size: contain
+
+---
+# What did we win?
+
+All configuration in one place
+
+Very easy to add a new mapping script.
+
+RStudio will pop up argument names when you're typing the function.
+
+.center[
+<img src="photos/source_func_completion.png" style="width:60%">
+]
+
+---
+## What's missing?
+
+Function help/documentation
+
+.center[
+<img src="photos/source_no_help.png" style="width:100%">
+]
+
+
+Gets complicated when utility functions need each other
+> Mapping scripts only need `utils/config.R` to let `utils/mapping.R` functions find data.
+
+Hard to know what packages the utilities require:
+> `utils/config.R` needs `config`
+> `utils/mapping.R` needs `ggmap`, `fs`, ...
+
+
+---
+# That sounds familiar...
+
+.pull-left[
+![boy_thinking](photos/boy_thinking.jpg)
+]
+--
+.pull-right[
+<img src="http://r-pkgs.had.co.nz/cover.png" style="width:100%">
+]
+
+---
+# A Package!
+
+Docs/help integrate nicely with RStudio
+
+Namespace lets everything work together
+
+Dependencies are well defined
+
+---
+
+.center[
+<div style="font-size:250%"><br>BUT</div>
+<div style="font-size:200%"><br>Packages take work</div>
+<div style="font-size:150%"><br>and I just have a few scripts</div>
+<div style="font-size:100%"><br>to share with just few people</div>
+<div style="font-size:75%"><br>and I don't want to have to install it</div>
+<div style="font-size:66%"><br>and please don't make me pick a name</div>
+]
+
+---
+# The solution
+
+Utility package
+
+
+---
+# Standalone package
 
 
 
 ---
 ## Tips
-
-Always helpful:
-  - `usethis::use_git`
-  - separate "define how to do X" from "do X"
-
-Utility scripts:
-  - no side effects
-  - don't source other utility scripts -- keep it flat
 
 Internal packages:
   - function documentation will show up in rstudio as tooltips

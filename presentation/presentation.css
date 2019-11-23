@@ -1,4 +1,6 @@
-.tinycode .remark-code {font-size:40%}
+.tinycode .remark-code {
+  font-size: 5px
+}
 
 .project-equation {
   margin-left: 0;
@@ -21,17 +23,16 @@
   margin-right: 2%;
 }
 
-.center {
+
+.flowchart svg {
   display: block;
-  margin-left: auto;
-  margin-right: auto;
+  margin: auto;
+  max-width: 780px;
 }
-
-
 
 /* Xaringan overrides */
 
 .remark-slide-content{
-  font-size:30px;
+  font-size:25px;
 }
 
