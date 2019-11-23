@@ -2,6 +2,10 @@
   font-size: 5px
 }
 
+.hugecode .remark-code {
+  font-size: 30px
+}
+
 .project-equation {
   margin-left: 0;
   margin-right: 0;
@@ -25,9 +29,23 @@
 
 .boom{
   display:flex;
-  justify-content:center;
+  flex-wrap:wrap;
+  justify-content:space-around;
   align-items:center;
   height:70%;
+  width:100%;
+}
+.boomfull{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-around;
+  align-content:space-around;
+  align-items:center;
+  height:100%;
+  width:100%;
+}
+.fullwidth{
+  display: block;
   width:100%;
 }
 

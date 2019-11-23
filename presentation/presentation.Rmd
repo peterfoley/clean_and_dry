@@ -2,7 +2,7 @@
 title: "Staying clean and DRY"
 subtitle: "best practices for code reuse and collaboration"
 author: "Peter Foley"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "23 November, 2019"
 output:
   xaringan::moon_reader:
     seal: true
@@ -26,100 +26,143 @@ library(fs)
 ```
 
 
-Why bother keeping things organized
-
-Walk through example project that evolves
-  - will go through R's options for organizing code cleanly
-  - will give tips for each option
-  - will demonstrate when to switch between options
+.boomfull[
+<h1>Functions</h1>
+]
 
 ---
-## Simplified Glossary
 
-- Side Effects
-- Clean Code
-- Don't repeat yourself
+.boomfull[
+.hugecode[
+```{r eval=FALSE}
+plot_prices <- function(data) {
+  ggplot(data, aes(x=sqft, y=price)) +
+    geom_point() + geom_smooth()
+}
+```
+]
+]
+
+---
+.boomfull[
+<h1>Projects</h1>
+]
+
+---
+
+background-image: url("photos/people.jpg")
+background-position: center
+background-size: contain
+
+---
+.boomfull[
+<h1>Projects</h1>
+]
+
+---
+## Glossary
+
+.center[
+<h1>Don't repeat yourself</h1>
+]
+.center[
+<h1>Side Effects</h1>
+]
+.center[
+<h1>Clean Code</h1>
+]
+
+
+---
+## Glossary - Don't repeat yourself
+
+> Every piece of knowledge must have a single, unambiguous, authoritative representation within a system.
+
+*Maybe* a bit strict for our purposes.
+
+Don't have big copy/paste blocks.
+
+Don't have 4 different "connect_to_database" functions floating around a project.
 
 ---
 layout: true
-## Glossary - Side Effect
+## Glossary - Side Effects
 
-> HAVE NO SIDE EFFECTS
-> Side effects are lies. Your function promises to do one thing, but it also does other hidden things.
-> <sup>Bob Martin, Clean Code</sup>
+---
+> Changing state in a way that could change how other code runs.
+> 
+> `plot()`, `write_csv()`, `Sys.setenv()`, `library()`
 
 ```{r eval=FALSE}
-coffee_pot <- make_a_pot(cups = 12)
+pot <- fresh_pot(); cup <- new_cup(cups = 2)
 ```
 
 ---
 .pull-left[
-No side effects:
 ```{r eval=FALSE, size="small"}
 temp <-
-  temperature(coffee_pot)
+  temperature(pot)
 
-stream <-
-  pour_from(coffee_pot,
-            cups=2)
-filled_cup <-
-  pour_into(make_new_cup(),
-            stream)
+pour(from=pot,
+     into=cup,
+     cups=2)
 ```
 ]
 
 .pull-right[
-TODO - picture of pouring coffee
+![dogmap](photos/coffee_pour.jpg)
 ]
 
 ---
 .pull-left[
-Side effect!:
 ```{r eval=FALSE}
-*dump_on_floor(coffee_pot)
+# again!
+pour(from=pot,
+     into=cup,
+     cups=2)
 ```
 ]
 
 .pull-right[
-TODO - picture of coffee spill
+<img src="photos/coffee_overflow.jpg" style="width:300px">
 ]
 
 
 ---
-layout:false
-## Glossary - Don't Repeat Yourself
-
-TODO
-
+background-image: url("photos/clean_code.jpg")
+background-position: center
+background-size: contain
 
 ---
+layout: true
 ## Glossary - Clean Code
 
-TODO
-
 ---
-## Why bother?
+.center[
+"Clean code can be read, and enhanced by a developer other than its original author."
 
-- If any of these apply to you:
-  - You can't remember everything perfectly forever
-  - Other people don't know what you know
-  - You sometimes make mistakes and want to fix them
+"You know you are working on clean code when each routine you read turns out to be pretty much what you expected."
+
+Data projects have a lot of verbose code to move, clean, reshape, or enhance the data. It has a tendency to pile up and bury the big picture.
+
+That boilerplate is rarely tested and often copy/pasted.
+]
+
 
 --
 
-Reading code is harder than writing it
+.boomfull[
+<h1>Reading code is harder than writing it.</h1>
+]
 
 ---
+layout: false
 # Options for organizing code
 
 - standalone scripts
 - utility scripts (`source("utils.R")`)
 - utility package (`devtools::load_all("utils_pkg")`)
 - standalone package (`library(package)`)
-
---
-
-An actual project will make things clearer
 
 ---
 # The Initial Project
@@ -380,6 +423,11 @@ widgetframe::frameWidget(diagram, width="100%", height="100%")
 background-image: url("photos/kids_win.jpg")
 background-position: center
 background-size: contain
+
+--
+.center[
+<img src="links/1_utility_scripts/runs.png" style="width:60%">
+] 
 
 ---
 # What did we win?
