@@ -23,11 +23,12 @@
   margin-right: 2%;
 }
 
-
-.flowchart svg {
-  display: block;
-  margin: auto;
-  max-width: 780px;
+.boom{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:70%;
+  width:100%;
 }
 
 /* Xaringan overrides */

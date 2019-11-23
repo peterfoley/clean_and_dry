@@ -416,7 +416,7 @@ Hard to know what packages the utilities require:
 # That sounds familiar...
 
 .pull-left[
-![boy_thinking](photos/boy_thinking.jpg)
+![boy_thinking](photos/dog_lookright.jpeg)
 ]
 --
 .pull-right[
@@ -434,19 +434,59 @@ Dependencies are well defined
 
 ---
 
-.center[
-<div style="font-size:250%"><br>BUT</div>
-<div style="font-size:200%"><br>Packages take work</div>
-<div style="font-size:150%"><br>and I just have a few scripts</div>
-<div style="font-size:100%"><br>to share with just few people</div>
-<div style="font-size:75%"><br>and I don't want to have to install it</div>
-<div style="font-size:66%"><br>and please don't make me pick a name</div>
-]
+<div style="text-align:center;font-size:250%"><br>BUT</div>
+<div style="text-align:center;font-size:175%"><br>Packages are complicated</div>
+--
+<div style="text-align:center;font-size:150%"><br>and I just have a little code</div>
+--
+<div style="text-align:center;font-size:125%"><br>just for this one project</div>
+--
+<div style="text-align:center;font-size:100%"><br>and I don't want to have to install it</div>
+--
+<div style="text-align:center;font-size:75%"><br>and please don't make me pick a name</div>
 
 ---
 # The solution
 
-Utility package
+--
+
+.boom[
+<h1><code class="remark-inline-code">devtools::load_all()</code></h1>
+]
+
+---
+# `?devtools::load_all()`
+
+### Load Complete Package.
+
+**`load_all`**
+: loads a package. It roughly simulates what happens when a package is installed and loaded with `library()`.
+
+```r
+load_all(path = ".", reset = TRUE, recompile = FALSE,
+  export_all = TRUE, helpers = TRUE, quiet = FALSE, ...)
+```
+
+**`export_all`**
+: If `TRUE` (the default), export all objects. If `FALSE`, export only the objects that are listed as exports in the `NAMESPACE` file.
+
+---
+### `devtools::load_all()` lets you
+
+.center[
+Keep a tidy namespace.
+
+Write documentation -- **or not**.
+
+Write tests -- **or not**.
+
+Define dependencies -- **or not**.
+]
+
+---
+# Utility Scripts → Utility Package
+
+
 
 
 ---
