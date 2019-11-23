@@ -51,6 +51,7 @@ latlon_bb <- function(df, lat=df$lat, lon=df$lon) {
 
 # pad the bounding box to make ggmap plots prettier
 pad_bb <- function(bb, lat=1.1, lon=lat) {
+  bb <- setNames(bb, NULL)
   center = c(lon = bb[1] + bb[3], lat = bb[2] + bb[4]) / 2
   halfwidth = c(lon = bb[3] - bb[1], lat = bb[4] - bb[2]) / 2
 

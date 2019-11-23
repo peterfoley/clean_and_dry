@@ -544,16 +544,23 @@ Rendering development documentation for 'get_activity_data'
 ```r
 setwd("myutils")
 usethis::use_testthat()
-setwd("..")
 ```
 2. Write your tests
 ```r
-...left as an exercise to the reader...
+usethis::use_test("onething")
+# opens tests/testthat/test-onething.R for editing
 ```
 3. Test!
 ```r
-devtools::test("myutils")
+devtools::test(".")
 ```
+
+
+---
+## Like defining dependencies?
+
+
+
 
 ---
 # Standalone package
