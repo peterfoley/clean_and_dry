@@ -486,8 +486,74 @@ Define dependencies -- **or not**.
 ---
 # Utility Scripts → Utility Package
 
+1. Make a package skeleton
+```{r eval=FALSE, tidy=T}
+usethis::create_package(
+  path = "myutils",
+  rstudio=FALSE, open=FALSE
+  )
+)
+```
+2. Stick all your utility scripts in the `R/` folder.
+```{r eval=FALSE, tidy=T}
+system("mv utils/*.R myutils/R/")
+```
+3. Be done if you feel like it.
+```{r eval=FALSE, tidy=T}
+pkgload::load_all("myutils")
+```
+
+---
+## Got roxygen2 docs?
+
+.pull-left[
+```r
+#' Get activity data
+#'
+#' @param id Garmin Activity ID
+#'
+#' @return dataframe with one row per moment recorded
+#' @export
+get_activity_data <- function(id) {
+  fit_path <- fs::path(strict_config("gcexport_data_dir"),"fit",paste0("activity_",id,".fit"))
+  fit_data <- fit::read.fit(fit_path)
+  fit_data$record
+}
+```
+]
+.pull-right[
+```r
+> devtools::document("myutils")
+Updating myutils documentation
+Writing NAMESPACE
+Loading myutils
+Writing NAMESPACE
+> devtools::load_all("myutils")
+Loading myutils
+> ?get_activity_data
+Rendering development documentation for 'get_activity_data'
+```
+<img src="photos/devtools_show_help.png" style="width:100%">
+]
 
 
+---
+## Like tests?
+
+1. Add the boilerplate
+```r
+setwd("myutils")
+usethis::use_testthat()
+setwd("..")
+```
+2. Write your tests
+```r
+...left as an exercise to the reader...
+```
+3. Test!
+```r
+devtools::test("myutils")
+```
 
 ---
 # Standalone package

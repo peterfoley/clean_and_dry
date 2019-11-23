@@ -1,0 +1,6 @@
+default:
+  exporter_tool_dir: !expr here::here("external_tools","garmin-connect-export")
+  gcexport_data_dir: !expr here::here("private_data","gcexport")
+  garmin_connect_username: "pwfoley@gmail.com"
+  garmin_connect_keyring_service: "sso.garmin.com"
+
