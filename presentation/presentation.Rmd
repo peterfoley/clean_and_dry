@@ -372,37 +372,6 @@ layout: false
 
 
 ---
-layout: false
-## New scripts
-
-.center[
-```{r echo=FALSE, results='asis'}
-scriptRows <- function(adir) {
-  tibble(path=dir_ls(adir, glob="*.R", recurse=1)) %>%
-    transmute(file=basename(path),
-           lines=map_int(path, R.utils::countLines))
-}
-counts <- tribble(
-  ~version, ~dir,
-  "Standalone", "0_standalone_scripts",
-  "Utility", "1_utility_scripts"
-) %>%
-  mutate(dir = here(dir),
-         data = map(dir, scriptRows)) %>%
-  tidyr::unnest(data) %>%
-  select(version, file, lines) %>%
-  tidyr::pivot_wider(file, names_from=version, values_from=lines) %>%
-  arrange(desc(Standalone), desc(Utility)) %>%
-  set_names(c("","Pre","Post"))
-
-oldopt <- options(knitr.kable.NA = '-')
-knitr::kable(counts, format="html")
-options(oldopt)
-```
-]
-
-
----
 layout:false
 ```{r utility_flow, results="asis", echo=FALSE, fig.align='center', fig.retina=3}
 diagram <- DiagrammeR::mermaid("
