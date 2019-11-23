@@ -36,4 +36,4 @@ run_plot <- basemap +
 
 ggsave(run_plot,
        file="runs.png",
-)
+       height=2.5, width=7)
