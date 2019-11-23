@@ -1,6 +1,6 @@
 # set up garmin password in keyring
 
-source("utils/config.R")
+devtools::load_all("myutils")
 
 keyring::key_set_with_value(
   strict_config("garmin_connect_keyring_service"),

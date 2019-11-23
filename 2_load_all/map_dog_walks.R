@@ -1,10 +1,7 @@
 # Map walks
-library(dplyr)
-library(purrr)
 library(furrr)
 
-source("utils/mapping.R")
-source("utils/config.R")
+devtools::load_all("myutils")
 
 future::plan(future::multiprocess())
 

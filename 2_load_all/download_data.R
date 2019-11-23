@@ -1,12 +1,8 @@
 ## Get all the activity data
-library(here)
 library(reticulate)
-library(keyring)
-library(purrr)
-library(dplyr)
 library(readr)
 
-source("utils/config.R")
+devtools::load_all("myutils")
 
 # get garmin creds
 gc_user <- strict_config("garmin_connect_username")

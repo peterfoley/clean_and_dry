@@ -25,18 +25,16 @@ library(tibble)
 library(fs)
 ```
 
-TODO - About me
 
----
 Why bother keeping things organized
 
-Walk through example project with evolving needs
+Walk through example project that evolves
   - will go through R's options for organizing code cleanly
   - will give tips for each option
   - will demonstrate when to switch between options
 
 ---
-## Glossary
+## Simplified Glossary
 
 - Side Effects
 - Clean Code
@@ -46,7 +44,9 @@ Walk through example project with evolving needs
 layout: true
 ## Glossary - Side Effect
 
-> change something other than arguments or return values
+> HAVE NO SIDE EFFECTS
+> Side effects are lies. Your function promises to do one thing, but it also does other hidden things.
+> <sup>Bob Martin, Clean Code</sup>
 
 ```{r eval=FALSE}
 coffee_pot <- make_a_pot(cups = 12)
@@ -63,7 +63,7 @@ stream <-
   pour_from(coffee_pot,
             cups=2)
 filled_cup <-
-  pour_into(empty_cup,
+  pour_into(make_new_cup(),
             stream)
 ```
 ]
@@ -278,7 +278,7 @@ layout: true
 ---
 .pull-left[
 **`utils/config.R`**
-```r
+```{r eval=FALSE}
 strict_config(value, ...)
 ```
 ]
@@ -462,7 +462,7 @@ Dependencies are well defined
 **`load_all`**
 : loads a package. It roughly simulates what happens when a package is installed and loaded with `library()`.
 
-```r
+```{r eval=FALSE}
 load_all(path = ".", reset = TRUE, recompile = FALSE,
   export_all = TRUE, helpers = TRUE, quiet = FALSE, ...)
 ```
@@ -474,6 +474,8 @@ load_all(path = ".", reset = TRUE, recompile = FALSE,
 ### `devtools::load_all()` lets you
 
 .center[
+House utility functions alongside "do stuff" code.
+
 Keep a tidy namespace.
 
 Write documentation -- **or not**.
@@ -487,27 +489,27 @@ Define dependencies -- **or not**.
 # Utility Scripts → Utility Package
 
 1. Make a package skeleton
-```{r eval=FALSE, tidy=T}
-usethis::create_package(
-  path = "myutils",
-  rstudio=FALSE, open=FALSE
-  )
-)
-```
-2. Stick all your utility scripts in the `R/` folder.
-```{r eval=FALSE, tidy=T}
-system("mv utils/*.R myutils/R/")
-```
+    ```{r eval=FALSE, tidy=T}
+    usethis::create_package(
+      path = "myutils",
+      rstudio=FALSE, open=FALSE
+      )
+    )
+    ```
+2. Move all your utility scripts in the `R/` folder.
+    ```{r eval=FALSE, tidy=T}
+    system("mv utils/*.R myutils/R/")
+    ```
 3. Be done if you feel like it.
-```{r eval=FALSE, tidy=T}
-pkgload::load_all("myutils")
-```
+    ```{r eval=FALSE, tidy=T}
+    pkgload::load_all("myutils")
+    ```
 
 ---
 ## Got roxygen2 docs?
 
 .pull-left[
-```r
+```{r eval=FALSE}
 #' Get activity data
 #'
 #' @param id Garmin Activity ID
@@ -522,7 +524,8 @@ get_activity_data <- function(id) {
 ```
 ]
 .pull-right[
-```r
+.small[
+```{r eval=FALSE}
 > devtools::document("myutils")
 Updating myutils documentation
 Writing NAMESPACE
@@ -533,6 +536,7 @@ Loading myutils
 > ?get_activity_data
 Rendering development documentation for 'get_activity_data'
 ```
+]
 <img src="photos/devtools_show_help.png" style="width:100%">
 ]
 
@@ -541,41 +545,171 @@ Rendering development documentation for 'get_activity_data'
 ## Like tests?
 
 1. Add the boilerplate
-```r
+```{r eval=FALSE}
 setwd("myutils")
 usethis::use_testthat()
 ```
 2. Write your tests
-```r
+```{r eval=FALSE}
 usethis::use_test("onething")
 # opens tests/testthat/test-onething.R for editing
 ```
 3. Test!
-```r
+```{r eval=FALSE}
 devtools::test(".")
 ```
 
 
 ---
-## Like defining dependencies?
+## Have dependencies?
+
+Usethis will put them in `DESCRIPTION` for you. Same for github packages!
+```{r eval=FALSE}
+usethis::use_package("ggmap")
+devtools::install_github("kuperov/fit")
+sethis::use_dev_package("fit")
+```
+.small[
+> add `@import` roxygen tags if you want to use `fun()` instead of `ggmap::fun()` within `myutils`
+]
+
+.small[
+> `use_dev_package` requires you install the package first so it can find the metadata.
+]
+
+Once `DESCRIPTION` is set up, installing all the dependencies is trivial.
+```{r eval=FALSE}
+devtools::install_deps("myutils")
+```
 
 
 
+---
+## Using your utility package
+
+.pull-left[
+```{r eval=FALSE}
+source("utils/config.R")
+source("utils/mapping.R)
+```
+]
+.pull-right[
+```{r eval=FALSE}
+devtools::load_all("myutils")
+```
+]
+
+.small[
+> Add to `Depends` in `DESCRIPTION` if you want to skip the `library()` calls
+]
+
+
+---
+
+## What's different from utility scripts?
+
+.pull-left[
+<div class="center"><h3>Good</h3></div>
+- Functions can work together better
+- Documentation
+- Tests
+- Dependency handling
+]
+
+.pull-right[
+<div class="center"><h3>Bad</h3></div>
+- Bit more work
+- Function definitions are harder to find
+]
+
+<div class="center"><h3>Same</h3></div>
+Project utilities maintained within project repo
+
+
+
+---
+<h2>
+.center[How is this not a regular package?]
+</h2>
+--
+<h2>
+.center[*It is a regular package.*]
+</h2>
+
+```{r eval=FALSE}
+devtools::install("myutils")
+library(myutils)
+```
+--
+<h2>
+.center[But it's only meant to be used within the project]
+</h2>
+.small[
+Though it's possible to do this:
+```{r eval=FALSE}
+devtools::install_github(
+  "peterfoley/clean_and_dry",
+  subdir="2_load_all/myutils")
+```
+]
 
 ---
 # Standalone package
 
+All the code is there.
+
+Difference is in how a "standalone" package is **managed**.
+
+  - Users ≠ Developers
+  - Likely higher stakes
+
+---
+## Utility → Standalone package
+
+1. Define the maintainers
+1. Move package to its own git repo
+1. `usethis::use_travis()`
+1. `usethis::use_coverage()`
+1. Expand testing
+1. Make docs user-friendly
 
 
 ---
-## Tips
+# When the options make sense
 
-Internal packages:
-  - function documentation will show up in rstudio as tooltips
-  - README.md can be helpful 
+.deftable[
+.deftable-left[
+  Bag-of-scripts
+]
+.deftable-right[
+- Early-stage exploratory work. One-offs.
+- While all the scripts are short
+- When the scripts aren't duplicative 
+]
+.deftable-left[
+  Utility scripts
+]
+.deftable-right[
+- Dividing/specializing labor
+- Multiple similar tasks in scripts
+- Utility scripts are few and short
+]
+.deftable-left[
+  Utility package
+]
+.deftable-right[
+- More specialization in labor
+- More utilities that call each other
+- Higher stakes (= need tests)
+]
+.deftable-left[
+  Standalone package
+]
+.deftable-right[
+- Useful outside the project
+]
+]
 
-Standalone packages:
-  - `usethis::use_testthat()`
-  - `usethis::use_travis()`
-  - 
+
+
 

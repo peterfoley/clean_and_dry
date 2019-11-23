@@ -31,6 +31,24 @@
   width:100%;
 }
 
+.deftable {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 0 0;
+  padding: 0;
+}
+
+.deftable-left{
+  width: 25%;
+}
+.deftable-right{
+  width: 75%;
+}
+
+
+.large { font-size: 130% }
+.small { font-size: 70% }
+
 /* Xaringan overrides */
 
 .remark-slide-content{

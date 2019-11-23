@@ -1,8 +1,5 @@
 # clone or update the downloader tool
-library(here)
-library(fs)
-
-source("utils/config.R")
+devtools::load_all("myutils")
 
 exporter_dir <- strict_config("exporter_dir")
 dir.create(exporter_dir, showWarnings = FALSE, recursive = TRUE)
