@@ -35,4 +35,5 @@ walk_plot <- basemap +
 
 ggsave(walk_plot,
        file="dog_walks.png",
-       )
+       height=3.75, width=7
+)

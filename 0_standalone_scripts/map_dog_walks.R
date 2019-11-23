@@ -78,6 +78,7 @@ walk_plot <- ggmap(basemap, extent="device") +
   scale_colour_gradient(low="green", high="red")
 
 ggsave(walk_plot,
-       file="0_standalone_scripts/dog_walks.png",
+       file="dog_walks.png",
+       height=3.75, width=7
        )
 
