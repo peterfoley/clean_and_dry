@@ -23,6 +23,17 @@ library(dplyr)
 library(purrr)
 library(tibble)
 library(fs)
+
+# copy images the presentation needs
+dir_create("auto_images")
+copy_in <- function(imgpath) {
+  file_copy(imgpath, path("auto_images",basename(imgpath)), overwrite = TRUE)
+}
+copy_in("../0_standalone_scripts/dog_walks.png")
+copy_in("../1_utility_scripts/runs.png")
+
+download.file("https://user-images.githubusercontent.com/6187884/29765129-3d63e67e-8bda-11e7-81c8-7beaf915a02a.jpg", path("auto_images","garmin_logo.jpg"))
+download.file("http://r-pkgs.had.co.nz/cover.png", path("auto_images","hadley_packages.png"))
 ```
 
 
@@ -196,8 +207,9 @@ Plot all my dog walks, colored by elevation.
 ]
 
 [dog_face]: photos/dog_face.jpeg
-[dogmap_standalone]: links/0_standalone_scripts/dog_walks.png
-[garmin_logo]: https://user-images.githubusercontent.com/6187884/29765129-3d63e67e-8bda-11e7-81c8-7beaf915a02a.jpg
+[dogmap_standalone]: auto_images/dog_walks.png
+[garmin_logo]: auto_images/garmin_logo.jpg
+
 
 ---
 class: center, middle
@@ -431,7 +443,7 @@ background-size: contain
 --
 
 .center[
-<img src="links/1_utility_scripts/runs.png" style="width:80%;position:absolute;top:55%;left:9%;">
+<img src="auto_images/runs.png" style="width:80%;position:absolute;top:55%;left:9%;">
 ] 
 
 ---
@@ -473,7 +485,7 @@ Hard to know what packages the utilities require:
 ]
 --
 .pull-right[
-<img src="http://r-pkgs.had.co.nz/cover.png" style="width:100%">
+<img src="auto_images/hadley_packages.png" style="width:100%">
 ]
 
 ---

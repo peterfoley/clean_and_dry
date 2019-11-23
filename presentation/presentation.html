@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Staying clean and DRY</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Peter Foley" />
+    <link href="presentation_files/remark-css-0.0.1/ninjutsu.css" rel="stylesheet" />
+    <link href="presentation_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="presentation_files/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <script src="presentation_files/htmlwidgets-1.5.1/htmlwidgets.js"></script>
+    <script src="presentation_files/pymjs-1.3.2/pym.v1.js"></script>
+    <script src="presentation_files/widgetframe-binding-0.3.1/widgetframe.js"></script>
+    
+    <link rel="stylesheet" href="presentation.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Staying clean and DRY
+## best practices for code reuse and collaboration
+### Peter Foley
+### 23 November, 2019
+
+---
+
+
+
+
+
+
+.boomfull[
+&lt;h1&gt;Functions&lt;/h1&gt;
+]
+
+---
+
+.boomfull[
+.hugecode[
+
+```r
+plot_prices &lt;- function(data) {
+  ggplot(data, aes(x=sqft, y=price)) +
+    geom_point() + geom_smooth()
+}
+```
+]
+]
+
+---
+.boomfull[
+&lt;h1&gt;Projects&lt;/h1&gt;
+]
+
+---
+
+background-image: url("photos/people.jpg")
+background-position: center
+background-size: contain
+
+---
+.boomfull[
+&lt;h1&gt;Glossary&lt;/h1&gt;
+]
+
+---
+## Glossary
+
+.center[
+&lt;h1&gt;Don't repeat yourself&lt;/h1&gt;
+]
+.center[
+&lt;h1&gt;Side Effects&lt;/h1&gt;
+]
+.center[
+&lt;h1&gt;Clean Code&lt;/h1&gt;
+]
+
+
+---
+## Glossary - Don't repeat yourself
+
+&gt; Every piece of knowledge must have a single, unambiguous, authoritative representation within a system.
+
+*Maybe* a bit strict for our purposes.
+
+Don't have big copy/paste blocks.
+
+Don't have 4 different "connect_to_database" functions floating around a project.
+
+---
+layout: true
+## Glossary - Side Effects
+
+---
+&gt; Changing state in a way that could change how other code runs.
+
+
+```r
+pot &lt;- fresh_pot(); mug &lt;- new_mug(capacity_ounces = 12)
+```
+
+---
+.pull-left[
+
+```r
+temp &lt;-
+  temperature(pot)
+
+pour(from=pot,
+     into=mug,
+     ounces=12)
+```
+]
+
+.pull-right[
+![dogmap](photos/coffee_pour.jpg)
+]
+
+---
+.pull-left[
+
+```r
+# again!
+pour(from=pot,
+     into=mug,
+     ounces=12)
+```
+Defining `pour` is safe, calling `pour()` can be dangerous.
+
+
+```r
+plot()
+write_csv()
+Sys.setenv()
+library()
+#&gt; stats vs. dplyr filter
+```
+]
+
+.pull-right[
+&lt;img src="photos/coffee_overflow.jpg" style="width:300px"&gt;
+]
+
+
+---
+layout:false
+background-image: url("photos/clean_code.jpg")
+background-position: center
+background-size: contain
+
+---
+layout: true
+## Glossary - Clean Code
+
+---
+.center[
+"Clean code can be read, and enhanced by a developer other than its original author."
+
+"You know you are working on clean code when each routine you read turns out to be pretty much what you expected."
+
+Data projects have a lot of verbose code to move, clean, reshape, or enhance the data. It has a tendency to pile up and bury the big picture.
+
+That boilerplate is rarely tested and often copy/pasted.
+]
+
+
+--
+
+.center[
+&lt;h1&gt;Reading code is harder than writing it.&lt;/h1&gt;
+]
+
+---
+layout:false
+.boomfull[
+&lt;h1&gt;Time to get organized!&lt;/h1&gt;
+]
+
+
+---
+layout: false
+# Options for organizing code
+
+- standalone scripts
+- utility scripts (`source("utils.R")`)
+- utility package (`devtools::load_all("utils_pkg")`)
+- standalone package (`library(package)`)
+
+---
+# The Initial Project
+
+Plot all my dog walks, colored by elevation.
+
+.project-equation[
+  .project-equation-item[
+    ![garmin_logo][garmin_logo]]
+  .project-equation-char[x]
+  .project-equation-item[
+    ![dogpicture][dog_face]]
+  .project-equation-char[=]
+  .project-equation-item[
+    ![dogmap][dogmap_standalone]]
+]
+
+[dog_face]: photos/dog_face.jpeg
+[dogmap_standalone]: auto_images/dog_walks.png
+[garmin_logo]: auto_images/garmin_logo.jpg
+
+
+---
+class: center, middle
+
+<div id="htmlwidget-381205d7f00767e93705" style="width:100%;height:100%;" class="widgetframe html-widget"></div>
+<script type="application/json" data-for="htmlwidget-381205d7f00767e93705">{"x":{"url":"presentation_files/figure-html//widgets/widget_standalone_flow.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+
+
+
+.pull-left[
+**`setup_keys.R`**
+.tinycode[
+
+```r
+# set up garmin password in keyring
+
+keyring::key_set_with_value(
+  "sso.garmin.com",
+  username=rstudioapi::askForPassword("Garmin Connect username/email"),
+  password=rstudioapi::askForPassword("Garmin Connect password"))
+```
+]
+
+**`download_data.R`**
+.tinycode[
+
+```r
+## Get all the activity data
+library(here)
+library(reticulate)
+library(keyring)
+library(purrr)
+library(dplyr)
+library(readr)
+
+# get garmin creds
+gc_user &lt;- "pwfoley@gmail.com"
+gc_pass &lt;- keyring::key_get("sso.garmin.com",username=gc_user)
+
+# run the downloader tool with reticulate
+output_dir &lt;- here("private_data/gcexport")
+# most recent N, or "all" gets everything
+max_activities &lt;- "all"
+gcexport_dir &lt;- here("external_tools/garmin-connect-export")
+gcexport &lt;- import_from_path("gcexport", path = gcexport_dir)
+export_args &lt;- c(
+  "--username", gc_user,
+  "--password", gc_pass,
+  "--count", max_activities,
+  "--format", "original",
+  "--directory", output_dir,
+  "--subdir", "fit",
+  "--unzip"
+)
+res &lt;- gcexport$main(c("gcexport.py",export_args))
+
+
+# deduplicate the csv file that it created
+# read_lines instead of read_csv to preserve weird quoting
+# and to preserve CRLF
+read_lines(file.path(output_dir,"activities.csv")) %&gt;%
+  unique %&gt;%
+  write_lines(file.path(output_dir,"activities.csv"),
+              sep = "\r\n")
+```
+]
+]
+
+.pull-right[
+**`get_downloader.R`**
+.tinycode[
+
+```r
+# clone or update the downloader tool
+library(here)
+library(fs)
+
+exporter_dir &lt;- here("external_tools/garmin-connect-export")
+dir.create(exporter_dir, showWarnings = FALSE, recursive = TRUE)
+repo_already_cloned &lt;- file_exists(path(exporter_dir,".git/"))
+if(repo_already_cloned) {
+  pull_retval &lt;- system2("git",c("-C", exporter_dir, "pull"), stdout = FALSE, stderr=FALSE)
+  if(!identical(pull_retval,0L)) {
+    warning("update of downloader tool failed")
+  }
+} else {
+  clone_retval &lt;- system2("git",c("clone","https://github.com/pe-st/garmin-connect-export",exporter_dir), stdout = FALSE, stderr=FALSE)
+  if(!identical(clone_retval,0L)) {
+    stop("clone of downloader tool failed")
+  }
+}
+```
+]
+
+**`map_dog_walks.R`**
+.tinycode[
+
+```r
+# Map walks
+library(dplyr)
+library(purrr)
+library(furrr)
+library(readr)
+library(here)
+library(fs)
+library(xml2)
+
+future::plan(future::multiprocess())
+
+here &lt;- here::here
+gcexport_dir &lt;- here("private_data/gcexport")
+
+activities &lt;- read_csv(file.path(gcexport_dir,"activities.csv")) %&gt;%
+  distinct
+
+fit_from_id &lt;- function(id) {
+  fit_path &lt;- path(gcexport_dir,"fit",paste0("activity_",id,".fit"))
+  fit_data &lt;- fit::read.fit(fit_path)
+  fit_data$record
+}
+
+km_per_mile &lt;- 1.60934
+dog_walks &lt;- activities %&gt;%
+  filter(`Activity Name` == "Pasadena Walking",
+         `Distance (km)` %&gt;%
+           between(1.25 * km_per_mile,
+                   1.4 * km_per_mile)) %&gt;%
+  mutate(data = future_map(`Activity ID`, fit_from_id, .progress = TRUE))
+
+all_flat &lt;- dog_walks %&gt;%
+  filter(`Activity ID` != 2858485459,
+         `Activity ID` != 3062996451) %&gt;%
+  tidyr::unnest(col="data") %&gt;%
+  mutate(ele = altitude,
+         lat = position_lat,
+         lon = position_long)
+
+latlon_bb &lt;- function(df) {
+  # left/bottom/right/top
+  clean &lt;- function(x) {
+    x &lt;- na.omit(x)
+    x &lt;- x[!near(abs(x), 180, tol=.001)]
+    x
+  }
+  lat &lt;- clean(df$lat)
+  lon &lt;- clean(df$lon)
+  c(min(lon, na.rm=T),
+    min(lat, na.rm=T),
+...(34 more lines)...
+```
+]
+]
+
+
+---
+class: center, middle
+
+<div id="htmlwidget-2777dbeaa8dcc199f348" style="width:100%;height:100%;" class="widgetframe html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2777dbeaa8dcc199f348">{"x":{"url":"presentation_files/figure-html//widgets/widget_unnamed-chunk-11.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+# Utility scripts
+
+`.R` files that are `source()`'ed to define functions or variables.
+
+
+```r
+library(dplyr)
+library(ggplot2)
+
+source("utils_data.R")
+source("utils_mapping.R")
+
+*get_the_data(date="2019-11-23") %&gt;%
+  filter(driver=="Penelope") %&gt;%
+* map_all_drives()
+```
+
+
+---
+layout: true
+## Standalone → Utility scripts
+
+---
+Why put things in utility scripts?
+  - less code
+  - write once for all collaborators
+  - separates "define how to do X" from "do X"
+    - "Teach your code to fish"
+    - more readable "Action" scripts: `catch_a_fish()`
+
+---
+Do put in utility scripts:
+  - Shared configuration (file locations, etc.)
+  - Shared needs
+    - DB authentication
+    - loading particular data
+    - data filter/cleanup functions
+    - standardized definitions
+  - Big ugly function definitions
+
+---
+Do NOT put in:
+  - code that actually takes actions
+    - reading data
+    - writing data
+    - saving plots
+    - user interaction
+  - `source()` calls to other utility scripts
+  - `library()`
+
+---
+layout: true
+## New utility scripts
+
+---
+.pull-left[
+**`utils/config.R`**
+
+```r
+strict_config(value, ...)
+```
+]
+.pull-right[
+**`utils/mapping.R`**
+
+```r
+get_all_activities()
+get_activity_data(id)
+flatten_activities(nested)
+latlon_bb(df, lat=df$lat,
+          lon=df$lon)
+pad_bb(bb, lat=1.1,
+       lon=lat)
+make_basemap(flat_data, zoom=16)
+```
+]
+
+---
+layout: false
+## New mapping script
+
+**`map_runs.R`**
+.tinycode[
+
+```r
+# Map walks
+library(dplyr)
+library(purrr)
+library(furrr)
+
+source("utils/mapping.R")
+source("utils/config.R")
+
+future::plan(future::multiprocess())
+
+here &lt;- here::here
+
+km_per_mile &lt;- 1.60934
+all_flat &lt;- get_all_activities() %&gt;%
+  filter(`Activity Name` == "Pasadena Running",
+         `Distance (km)` %&gt;%
+           between(4.5 * km_per_mile,
+                   6  * km_per_mile)) %&gt;%
+  mutate(data = future_map(`Activity ID`, get_activity_data, .progress = TRUE)) %&gt;%
+  flatten_activities()
+
+smaller_area &lt;- all_flat %&gt;%
+  group_by(`Activity ID`) %&gt;%
+  filter(min(lon) &gt; -118.0807)
+
+library(ggmap)
+basemap &lt;- make_basemap(smaller_area, zoom=15)
+
+pl_dat &lt;- all_flat %&gt;%
+  group_by(`Activity ID`) %&gt;%
+  mutate(ele_norm = (ele - min(ele))/(max(ele)-min(ele)))
+
+run_plot &lt;- basemap +
+  geom_path(data=pl_dat, aes(x=lon,y=lat, group=`Activity ID`, color=ele_norm)) +
+  scale_colour_gradient(low="green", high="red")
+
+ggsave(run_plot,
+       file="runs.png",
+       height=2.5, width=7)
+```
+]
+
+
+---
+layout:false
+<div id="htmlwidget-b781dc4f82635017f529" style="width:100%;height:100%;" class="widgetframe html-widget"></div>
+<script type="application/json" data-for="htmlwidget-b781dc4f82635017f529">{"x":{"url":"presentation_files/figure-html//widgets/widget_utility_flow.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+background-image: url("photos/kids_win.jpg")
+background-position: center
+background-size: contain
+
+--
+
+.center[
+&lt;img src="auto_images/runs.png" style="width:80%;position:absolute;top:55%;left:9%;"&gt;
+] 
+
+---
+# What did we win?
+
+All configuration in one place
+
+Very easy to add a new mapping script.
+
+RStudio will pop up argument names when you're typing the function.
+
+.center[
+&lt;img src="photos/source_func_completion.png" style="width:60%"&gt;
+]
+
+---
+## What's missing?
+
+Function help/documentation
+
+.center[
+&lt;img src="photos/source_no_help.png" style="width:100%"&gt;
+]
+
+
+Gets complicated when utility functions need each other
+&gt; Mapping scripts only need `utils/config.R` to let `utils/mapping.R` functions find data.
+
+Hard to know what packages the utilities require:
+&gt; `utils/config.R` needs `config`
+&gt; `utils/mapping.R` needs `ggmap`, `fs`, ...
+
+
+---
+# That sounds familiar...
+
+.pull-left[
+![boy_thinking](photos/dog_lookright.jpeg)
+]
+--
+.pull-right[
+&lt;img src="auto_images/hadley_packages.png" style="width:100%"&gt;
+]
+
+---
+# A Package!
+
+Docs/help integrate nicely with RStudio
+
+Namespace lets everything work together
+
+Dependencies are well defined
+
+---
+
+&lt;div style="text-align:center;font-size:250%"&gt;&lt;br&gt;BUT&lt;/div&gt;
+&lt;div style="text-align:center;font-size:175%"&gt;&lt;br&gt;Packages are complicated&lt;/div&gt;
+--
+&lt;div style="text-align:center;font-size:150%"&gt;&lt;br&gt;and I just have a little code&lt;/div&gt;
+--
+&lt;div style="text-align:center;font-size:125%"&gt;&lt;br&gt;just for this one project&lt;/div&gt;
+--
+&lt;div style="text-align:center;font-size:100%"&gt;&lt;br&gt;and I don't want to have to install it&lt;/div&gt;
+--
+&lt;div style="text-align:center;font-size:75%"&gt;&lt;br&gt;and please don't make me pick a name&lt;/div&gt;
+
+---
+# The solution
+
+--
+
+.boom[
+&lt;h1&gt;&lt;code class="remark-inline-code"&gt;devtools::load_all()&lt;/code&gt;&lt;/h1&gt;
+]
+
+---
+# `?devtools::load_all()`
+
+### Load Complete Package.
+
+**`load_all`**
+: loads a package. It roughly simulates what happens when a package is installed and loaded with `library()`.
+
+
+```r
+load_all(path = ".", reset = TRUE, recompile = FALSE,
+  export_all = TRUE, helpers = TRUE, quiet = FALSE, ...)
+```
+
+**`export_all`**
+: If `TRUE` (the default), export all objects. If `FALSE`, export only the objects that are listed as exports in the `NAMESPACE` file.
+
+---
+### `devtools::load_all()` lets you
+
+.center[
+House utility functions alongside "Action" code.
+
+Keep a tidy namespace.
+
+Write documentation -- **or not**.
+
+Write tests -- **or not**.
+
+Define dependencies -- **or not**.
+]
+
+---
+# Utility Scripts → Utility Package
+
+1. Make a package skeleton
+    
+    ```r
+    usethis::create_package(
+      path = "myutils",
+      rstudio=FALSE, open=FALSE
+      )
+    )
+    ```
+2. Move all your utility scripts in the `R/` folder.
+    
+    ```r
+    system("mv utils/*.R myutils/R/")
+    ```
+3. Be done if you feel like it.
+    
+    ```r
+    devtools::load_all("myutils")
+    ```
+
+---
+## Got roxygen2 docs?
+
+.pull-left[
+
+```r
+#' Get activity data
+#'
+#' @param id Garmin Activity ID
+#'
+#' @return dataframe with one row per moment recorded
+#' @export
+get_activity_data &lt;- function(id) {
+  fit_path &lt;- fs::path(strict_config("gcexport_data_dir"),"fit",paste0("activity_",id,".fit"))
+  fit_data &lt;- fit::read.fit(fit_path)
+  fit_data$record
+}
+```
+]
+.pull-right[
+.small[
+
+```r
+&gt; devtools::document("myutils")
+Updating myutils documentation
+Writing NAMESPACE
+Loading myutils
+Writing NAMESPACE
+&gt; devtools::load_all("myutils")
+Loading myutils
+&gt; ?get_activity_data
+Rendering development documentation for 'get_activity_data'
+```
+]
+&lt;img src="photos/devtools_show_help.png" style="width:100%"&gt;
+]
+
+
+---
+## Like tests?
+
+1. Add the boilerplate
+    
+    ```r
+    setwd("myutils")
+    usethis::use_testthat()
+    ```
+2. Write your tests
+    
+    ```r
+    usethis::use_test("onething")
+    # opens tests/testthat/test-onething.R for editing
+    ```
+3. Test!
+    
+    ```r
+    devtools::test(".")
+    ```
+
+
+---
+## Have dependencies?
+
+Usethis will put them in `DESCRIPTION` for you. Same for github packages!
+
+```r
+usethis::use_package("ggmap")
+devtools::install_github("kuperov/fit")
+usethis::use_dev_package("fit")
+```
+.small[
+&gt; add `@import` roxygen tags if you want to use `fun()` instead of `ggmap::fun()` within `myutils`
+]
+
+.small[
+&gt; `use_dev_package` requires you install the package first so it can find the metadata.
+]
+
+Once `DESCRIPTION` is set up, installing all the dependencies is trivial.
+
+```r
+devtools::install_deps("myutils")
+```
+
+
+
+---
+## Using your utility package
+
+.pull-left[
+
+```r
+source("utils/config.R")
+source("utils/mapping.R)
+```
+]
+.pull-right[
+
+```r
+devtools::load_all("myutils")
+```
+]
+
+.small[
+&gt; Add to `Depends` in `DESCRIPTION` if you want to skip the `library()` calls
+]
+
+
+---
+
+## What's different from utility scripts?
+
+.pull-left[
+&lt;div class="center"&gt;&lt;h3&gt;Good&lt;/h3&gt;&lt;/div&gt;
+- Functions can work together better
+- Documentation
+- Tests
+- Dependency handling
+]
+
+.pull-right[
+&lt;div class="center"&gt;&lt;h3&gt;Bad&lt;/h3&gt;&lt;/div&gt;
+- Bit more work
+- Function definitions are harder to find
+]
+
+&lt;div class="center"&gt;&lt;h3&gt;Same&lt;/h3&gt;&lt;/div&gt;
+Project utilities maintained within project repo
+
+
+
+---
+&lt;h2&gt;
+.center[How is this not a regular package?]
+&lt;/h2&gt;
+--
+&lt;h2&gt;
+.center[*It is a regular package.*]
+&lt;/h2&gt;
+
+
+```r
+devtools::install("myutils")
+library(myutils)
+```
+--
+&lt;h2&gt;
+.center[But it's only meant to be used within the project]
+&lt;/h2&gt;
+.small[
+Though it's possible to do this:
+
+```r
+devtools::install_github(
+  "peterfoley/clean_and_dry",
+  subdir="2_load_all/myutils")
+```
+]
+
+---
+# Standalone package
+
+The code is identical to your utility package.
+
+Difference is in how a "standalone" package is **managed**.
+
+  - Users ≠ Developers
+  - Likely higher stakes
+
+---
+## Utility → Standalone package
+
+1. Define the maintainers
+1. Move package to its own git repo
+1. `usethis::use_travis()`
+1. `usethis::use_coverage()`
+1. Expand testing
+1. Make docs user-friendly
+
+
+---
+# When the options make sense
+
+.deftable[
+.deftable-left[
+  Bag-of-scripts
+]
+.deftable-right[
+- Early-stage exploratory work. One-offs.
+- While all the scripts are short
+- When the scripts aren't duplicative 
+]
+.deftable-left[
+  Utility scripts
+]
+.deftable-right[
+- Dividing/specializing labor
+- Multiple similar tasks in scripts
+- Utility scripts are few and short
+]
+.deftable-left[
+  Utility package
+]
+.deftable-right[
+- More specialization in labor
+- More utilities that call each other
+- Higher stakes (= need tests)
+]
+.deftable-left[
+  Standalone package
+]
+.deftable-right[
+- Useful outside the project
+]
+]
+
+
+---
+
+background-image: url("photos/dog_happy.jpeg")
+background-position: center
+background-size: contain
+
+.boomfull[
+&lt;h1 style="color:white"&gt;Thank you!&lt;/h1&gt;
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
